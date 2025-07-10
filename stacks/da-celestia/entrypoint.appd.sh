@@ -148,7 +148,8 @@ if [ ! -f "$APPD_NODE_CONFIG_PATH" ]; then
     log "SUCCESS" "Snapshot downloaded successfully to /tmp/celestia-archive-snap.tar.lz4"
 
     log "INFO" "Extracting snapshot archive"
-    if ! tar -I lz4 -xvf /tmp/celestia-archive-snap.tar.lz4 -C $HOME/.celestia-app; then
+    # Use lz4 to decompress and pipe to tar (BusyBox compatible)
+    if ! lz4 -dc /tmp/celestia-archive-snap.tar.lz4 | tar -xvf - -C $HOME/.celestia-app; then
         log "ERROR" "Failed to extract snapshot archive"
         exit 1
     fi
