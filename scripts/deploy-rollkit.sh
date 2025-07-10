@@ -26,6 +26,7 @@ FORCE_INSTALL=false
 LOG_FILE=""
 CLEANUP_ON_EXIT=true
 DEPLOY_DA_CELESTIA=false
+SELECTED_DA=""
 
 # Logging functions with emojis
 log() {
@@ -113,6 +114,42 @@ cleanup() {
 trap cleanup EXIT
 trap 'error_exit "Script interrupted by user" 130' INT
 trap 'error_exit "Script terminated" 143' TERM
+
+# Interactive DA selection
+select_da_layer() {
+    log "CONFIG" "Selecting Data Availability layer..."
+
+    echo ""
+    echo "🌌 Available Data Availability (DA) layers:"
+    echo "  1) da-celestia - Celestia modular DA network"
+    echo "  2) none - Single sequencer only (no external DA)"
+    echo ""
+
+    while true; do
+        echo -n "Please select a DA layer (1-2): "
+        read -r choice
+
+        case $choice in
+            1)
+                SELECTED_DA="da-celestia"
+                DEPLOY_DA_CELESTIA=true
+                log "SUCCESS" "Selected DA layer: Celestia"
+                break
+                ;;
+            2)
+                SELECTED_DA="none"
+                DEPLOY_DA_CELESTIA=false
+                log "SUCCESS" "Selected: Single sequencer only (no external DA)"
+                break
+                ;;
+            *)
+                echo "❌ Invalid choice. Please enter 1 or 2."
+                ;;
+        esac
+    done
+
+    echo ""
+}
 
 # Download deployment files for single-sequencer
 download_sequencer_files() {
@@ -216,7 +253,9 @@ setup_sequencer_configuration() {
     if grep -q "^EVM_SIGNER_PASSPHRASE=$" "$env_file" || ! grep -q "^EVM_SIGNER_PASSPHRASE=" "$env_file"; then
         log "CONFIG" "Generating random EVM signer passphrase..."
         local passphrase=$(openssl rand -base64 32 | tr -d '\n')
-        sed -i "s/^EVM_SIGNER_PASSPHRASE=.*/EVM_SIGNER_PASSPHRASE=\"$passphrase\"/" "$env_file"
+        # Escape special characters for sed and use | as delimiter to avoid conflicts with /
+        local passphrase_escaped=$(printf '%s\n' "$passphrase" | sed 's/[[\.*^$()+?{|]/\\&/g')
+        sed -i "s|^EVM_SIGNER_PASSPHRASE=.*|EVM_SIGNER_PASSPHRASE=\"$passphrase_escaped\"|" "$env_file"
         log "SUCCESS" "EVM signer passphrase generated and set"
     fi
 
@@ -232,7 +271,9 @@ setup_sequencer_configuration() {
         fi
 
         # Update chain ID in .env file
-        sed -i "s/^CHAIN_ID=.*/CHAIN_ID=\"$chain_id\"/" "$env_file"
+        # Escape special characters for sed and use | as delimiter
+        local chain_id_escaped=$(printf '%s\n' "$chain_id" | sed 's/[[\.*^$()+?{|]/\\&/g')
+        sed -i "s|^CHAIN_ID=.*|CHAIN_ID=\"$chain_id_escaped\"|" "$env_file"
 
         # Update chainId in genesis.json file
         if [[ -f "genesis.json" ]]; then
@@ -263,6 +304,27 @@ setup_da_celestia_configuration() {
 
     if [[ ! -r "$env_file" ]]; then
         error_exit "DA-Celestia environment file is not readable: $env_file"
+    fi
+
+    # Check for missing DA_NAMESPACE and prompt user
+    if grep -q "^DA_NAMESPACE=$" "$env_file" || ! grep -q "^DA_NAMESPACE=" "$env_file"; then
+        echo ""
+        echo "🌌 DA Namespace is required for Celestia data availability."
+        echo "This should be a unique identifier for your rollup (e.g., 'myrollup', 'testchain')."
+        echo "Please enter a DA namespace (alphanumeric characters only):"
+        read -r da_namespace
+
+        # Validate DA namespace (alphanumeric only)
+        if ! [[ "$da_namespace" =~ ^[a-zA-Z0-9]+$ ]]; then
+            error_exit "DA namespace must contain only alphanumeric characters"
+        fi
+
+        # Update DA_NAMESPACE in .env file
+        # Escape special characters for sed and use | as delimiter
+        local da_namespace_escaped=$(printf '%s\n' "$da_namespace" | sed 's/[[\.*^$()+?{|]/\\&/g')
+        sed -i "s|^DA_NAMESPACE=.*|DA_NAMESPACE=\"$da_namespace_escaped\"|" "$env_file"
+
+        log "SUCCESS" "DA namespace set to: $da_namespace"
     fi
 
     log "SUCCESS" "DA-Celestia configuration setup completed"
@@ -498,12 +560,16 @@ main() {
         log "INFO" "Logging to: $LOG_FILE"
     fi
 
+    # Interactive DA selection if not specified via command line
+    if [[ "$DEPLOY_DA_CELESTIA" == "false" && -z "$SELECTED_DA" ]]; then
+        select_da_layer
+    fi
+
     # Show what will be deployed
     if [[ "$DEPLOY_DA_CELESTIA" == "true" ]]; then
         log "INFO" "Deploying: Single Sequencer + DA Celestia stacks"
     else
         log "INFO" "Deploying: Single Sequencer stack only"
-        log "INFO" "Use --with-da-celestia to also deploy DA Celestia stack"
     fi
 
     # Run deployment steps
