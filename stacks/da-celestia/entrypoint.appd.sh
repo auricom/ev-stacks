@@ -70,7 +70,9 @@ if [ ! -f "$APPD_NODE_CONFIG_PATH" ]; then
     log "SUCCESS" "Seeds fetched: $SEEDS"
 
     log "INFO" "Updating seeds configuration in config.toml"
-    sed -i.bak -e "s/^seeds *=.*/seeds = \"$SEEDS\"/" /home/celestia/.celestia-app/config/config.toml
+    # Escape special characters in SEEDS for sed
+    SEEDS_ESCAPED=$(printf '%s\n' "$SEEDS" | sed 's/[[\.*^$()+?{|]/\\&/g')
+    sed -i.bak -e "s/^seeds *=.*/seeds = \"$SEEDS_ESCAPED\"/" /home/celestia/.celestia-app/config/config.toml
     log "SUCCESS" "Seeds configuration updated"
 
     # Quick sync

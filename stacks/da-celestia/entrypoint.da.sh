@@ -114,9 +114,13 @@ fi
 if [ -f "$LIGHT_NODE_CONFIG_PATH" ]; then
     log "CONFIG" "Updating configuration with latest trusted state"
 
+    # Escape special characters for sed
+    latest_hash_escaped=$(printf '%s\n' "$latest_hash" | sed 's/[[\.*^$()+?{|]/\\&/g')
+    latest_block_escaped=$(printf '%s\n' "$latest_block" | sed 's/[[\.*^$()+?{|]/\\&/g')
+
     if ! sed -i.bak \
-        -e "s/\(TrustedHash[[:space:]]*=[[:space:]]*\).*/\1\"$latest_hash\"/" \
-        -e "s/\(SampleFrom[[:space:]]*=[[:space:]]*\).*/\1$latest_block/" \
+        -e "s/\(TrustedHash[[:space:]]*=[[:space:]]*\).*/\1\"$latest_hash_escaped\"/" \
+        -e "s/\(SampleFrom[[:space:]]*=[[:space:]]*\).*/\1$latest_block_escaped/" \
         "$LIGHT_NODE_CONFIG_PATH"; then
         log "ERROR" "Failed to update config with latest trusted state"
         exit 1
@@ -136,7 +140,9 @@ log "SUCCESS" "DASer.SampleFrom updated successfully"
 
 # Update Header.TrustedHash
 log "CONFIG" "Updating Header.TrustedHash to: ${DA_TRUSTED_HASH}"
-if ! sed -i 's/^[[:space:]]*TrustedHash = .*/  TrustedHash = "'"${DA_TRUSTED_HASH}"'"/' "$LIGHT_NODE_CONFIG_PATH"; then
+# Escape special characters for sed
+DA_TRUSTED_HASH_ESCAPED=$(printf '%s\n' "$DA_TRUSTED_HASH" | sed 's/[[\.*^$()+?{|]/\\&/g')
+if ! sed -i 's/^[[:space:]]*TrustedHash = .*/  TrustedHash = "'"$DA_TRUSTED_HASH_ESCAPED"'"/' "$LIGHT_NODE_CONFIG_PATH"; then
     log "ERROR" "Failed to update Header.TrustedHash"
     exit 1
 fi
