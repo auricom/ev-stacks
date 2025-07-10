@@ -29,7 +29,7 @@ services:
     volumes:
       - ./genesis.json:/root/genesis.json:ro
       - jwttoken:/root/jwt:ro
-      - /mnt/HC_Volume_102834165/reth-data:/root/reth
+      - reth-data:/root/reth
     entrypoint: /bin/sh -c
     command:
       - |
@@ -56,17 +56,14 @@ services:
 
   rollkit-evm-single-sequencer:
     container_name: sequencer
-    image: localhost/rollkit-evm-single:rolling
+    image: ghcr.io/rollkit/rollkit:main
     env_file: .env
-    build:
-      context: .
-      dockerfile: evm-single.Dockerfile
     restart: always
     depends_on:
       reth-sequencer:
         condition: service_started
     volumes:
-      - /mnt/HC_Volume_102834165/sequencer-data:/root/.evm-single
+      - sequencer-data:/root/.evm-single
       - jwttoken:/root/jwt:ro
       - ./entrypoint.sequencer.sh:/usr/bin/entrypoint.sh
     entrypoint: /usr/bin/entrypoint.sh
@@ -90,4 +87,8 @@ services:
 
 volumes:
   jwttoken:
+    driver: local
+  reth-data:
+    driver: local
+  sequencer-data:
     driver: local
