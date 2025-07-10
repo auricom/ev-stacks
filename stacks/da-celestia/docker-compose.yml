@@ -5,15 +5,15 @@ services:
     image: busybox
     user: root
     volumes:
-      - /mnt/HC_Volume_102832969/celestia-node-export:/data
+      - celestia-node-export:/data
     command: chown -R 10001:10001 /data
   app:
     container_name: celestia-app
-    image: ghcr.io/celestiaorg/celestia-app:${CELESTIA_APPD_TAG}
+    image: ghcr.io/celestiaorg/celestia-app-standalone:${CELESTIA_APPD_TAG}
     env_file: .env
     restart: always
     volumes:
-      - /mnt/HC_Volume_102832969/celestia-appd-data:/home/celestia/.celestia-app
+      - celestia-appd-data:/home/celestia/.celestia-app
       - ./entrypoint.appd.sh:/entrypoint.sh
     environment:
       - VOLUME_EXPORT_PATH=/volumes/da_export
@@ -33,8 +33,8 @@ services:
       - da-permission-fix
       - app
     volumes:
-      - /mnt/HC_Volume_102832969/celestia-node-data:/home/celestia
-      - /mnt/HC_Volume_102832969/celestia-node-export:/volumes/da_export
+      - celestia-node-data:/home/celestia
+      - celestia-node-export:/volumes/da_export
       - ./entrypoint.da.sh:/entrypoint.sh
     environment:
       - VOLUME_EXPORT_PATH=/volumes/da_export
@@ -47,3 +47,11 @@ services:
       timeout: 10s
       retries: 3
       start_period: 5s
+
+volumes:
+  celestia-appd-data:
+    driver: local
+  celestia-node-data:
+    driver: local
+  celestia-node-export:
+    driver: local
