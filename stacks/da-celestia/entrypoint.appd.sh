@@ -76,7 +76,7 @@ fi
 log "SUCCESS" "celestia-appd is available: $(which celestia-appd)"
 
 APPD_NODE_CONFIG_PATH=/home/celestia/.celestia/config/config.toml
-MONIKER=${MONIKER:-bb-node}
+MONIKER=${MONIKER:-node}
 
 log "INIT" "Starting Celestia App Daemon initialization"
 log "INFO" "Using moniker: $MONIKER"

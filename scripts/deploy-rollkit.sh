@@ -196,6 +196,7 @@ download_da_celestia_files() {
 
     local files=(
         "stacks/da-celestia/.env"
+        "stacks/da-celestia/celestia-app.Dockerfile"
         "stacks/da-celestia/docker-compose.yml"
         "stacks/da-celestia/entrypoint.appd.sh"
         "stacks/da-celestia/entrypoint.da.sh"
