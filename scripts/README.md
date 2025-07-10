@@ -32,7 +32,7 @@ The primary deployment script that orchestrates the entire deployment process.
 ./deploy-rollkit.sh
 
 # One-liner remote execution
-curl -fsSL https://raw.githubusercontent.com/01builders/infra/main/scripts/deploy-rollkit.sh | bash
+curl -fsSL https://raw.githubusercontent.com/auricom/ev-stacks/main/scripts/deploy-rollkit.sh | bash
 
 # With options
 ./deploy-rollkit.sh --verbose --log-file deployment.log
