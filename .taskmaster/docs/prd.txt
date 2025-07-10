@@ -1,0 +1,338 @@
+# Rollkit EVM Chain Deployment Automation - Product Requirements Document
+
+## Overview
+
+This project aims to document and automate the deployment of Rollkit EVM chains using Docker Compose as the orchestration platform. The solution will be modular, allowing for incremental deployment of different components starting with a single sequencer stack. Deployment will be automated through a simple shell script that users can execute with a single curl command, similar to popular tools like Homebrew. The system will provide a standardized, reproducible way to deploy Rollkit-based blockchain infrastructure with clear documentation and automation tooling.
+
+**Problem Statement**: Currently, deploying Rollkit EVM chains requires manual configuration and deep technical knowledge of the underlying components. There's a need for a streamlined, automated deployment process that can be easily replicated across different environments.
+
+**Target Users**:
+- Blockchain developers and DevOps engineers
+- Infrastructure teams deploying Rollkit-based solutions
+- Organizations wanting to quickly spin up EVM-compatible rollup chains
+
+**Value Proposition**: Reduces deployment complexity from hours/days to minutes while ensuring consistency and reliability across deployments.
+
+## Core Features
+
+### 1. Single Sequencer Stack Deployment (MVP)
+**What it does**: Automates the deployment of a complete single sequencer Rollkit EVM chain including:
+- Reth execution layer (Lumen fork)
+- Rollkit sequencer node
+- JWT token management
+- Prometheus metrics collection
+
+**Why it's important**: Provides the foundational building block for all Rollkit deployments and establishes the pattern for modular architecture.
+
+**How it works**: Uses Docker Compose with templated configuration files, environment variable management, and a single shell script that handles the entire deployment process.
+
+### 2. Modular Architecture Framework
+**What it does**: Establishes a plugin-like system where additional modules (full nodes, validators, monitoring, etc.) can be added independently.
+
+**Why it's important**: Allows for incremental scaling and customization based on specific deployment needs without rebuilding the entire stack.
+
+**How it works**: Each module is self-contained with its own Docker Compose fragment, configuration templates, and dependency definitions.
+
+### 3. Configuration Management System
+**What it does**: Provides templated configuration with environment-specific variable substitution and validation.
+
+**Why it's important**: Ensures deployments are consistent across environments while allowing for necessary customization.
+
+**How it works**: Uses shell script templating with environment variable substitution and configuration validation.
+
+### 4. One-Liner Deployment System
+**What it does**: Provides a single curl command that downloads and executes a shell script to deploy the entire Rollkit EVM chain stack.
+
+**Why it's important**: Eliminates the need for users to clone repositories, understand complex configurations, or manage dependencies manually.
+
+**How it works**: Shell script hosted on GitHub that handles dependency checking, configuration prompting, file generation, and service deployment.
+
+### 5. Simplified Health Monitoring
+**What it does**: Provides basic health monitoring using standard Docker Compose commands and manual endpoint testing rather than a dedicated health check system.
+
+**Why it's important**: Reduces complexity while still providing essential monitoring capabilities for operational visibility.
+
+**How it works**: Uses docker-compose ps, logs, and manual curl commands for service status verification and troubleshooting.
+
+### 6. Documentation and Deployment Guides
+**What it does**: Comprehensive documentation covering deployment procedures, troubleshooting, and operational guidance.
+
+**Why it's important**: Reduces onboarding time and operational overhead for teams deploying the system.
+
+**How it works**: Structured markdown documentation with step-by-step guides, architecture diagrams, and troubleshooting runbooks.
+
+## User Experience
+
+### User Personas
+1. **DevOps Engineer**: Needs reliable, automated deployment with monitoring and logging
+2. **Blockchain Developer**: Wants quick development environment setup with easy configuration
+3. **Infrastructure Architect**: Requires scalable, modular solution that can grow with needs
+
+### Key User Flows
+
+#### Primary Flow: Single Sequencer Deployment
+1. Execute one-liner curl command: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/01builders/infra/main/deploy-rollkit.sh)"`
+2. Script checks Docker/Docker Compose availability
+3. Script downloads and prepares all deployment files and configurations
+4. Script provides clear instructions for manual service startup via `docker-compose up -d`
+5. User manually starts services and verifies deployment health
+6. Access RPC endpoints for blockchain interaction
+
+#### Secondary Flow: Adding Additional Modules
+1. Select desired module from available options
+2. Configure module-specific variables
+3. Run module addition command
+4. Verify integration with existing stack
+
+### UI/UX Considerations
+- Command-line interface with clear, descriptive output
+- Configuration validation with helpful error messages
+- Health check endpoints for monitoring
+- Structured logging for troubleshooting
+
+## Technical Architecture
+
+### System Components
+
+#### Core Infrastructure Layer
+- **Docker Compose Orchestration**: Container management and networking
+- **Volume Management**: Persistent data storage for blockchain state
+
+#### Blockchain Layer
+- **Reth Sequencer (Lumen)**: Ethereum execution layer with Rollkit modifications
+- **Rollkit EVM Single**: Sequencer node handling transaction ordering and block production
+- **JWT Authentication**: Secure communication between execution and consensus layers
+
+#### Configuration Layer
+- **Shell Script Templates**: Environment-specific configuration generation
+- **Environment Variables**: Runtime configuration management
+- **Initialization Scripts**: Automated setup and key generation
+
+#### Monitoring Layer
+- **Prometheus Metrics**: Performance and health monitoring
+- **Health Check Endpoints**: Service availability verification
+- **Structured Logging**: Operational visibility and debugging
+
+### Data Models
+
+#### Environment Configuration
+```yaml
+chain_id: string
+da_rpc_port: integer
+da_auth_token: string
+sequencer_prometheus_port: integer
+sequencer_rpc_port: integer
+da_start_height: integer
+public_domain: string
+evm_signer_passphrase: string (encrypted)
+```
+
+#### Module Definition
+```yaml
+module_name: string
+dependencies: array[string]
+docker_compose_fragment: string
+configuration_template: string
+health_checks: array[object]
+```
+
+### APIs and Integrations
+
+#### External Dependencies
+- **Celestia DA Network**: Data availability layer integration
+- **Docker Registry**: Container image distribution
+
+#### Internal APIs
+- **Sequencer RPC**: JSON-RPC interface for blockchain interaction
+- **Prometheus Metrics**: Monitoring data collection
+- **Health Check Endpoints**: Service status verification
+
+### Infrastructure Requirements
+
+#### Minimum System Requirements
+- 4 CPU cores
+- 8GB RAM
+- 100GB SSD storage
+- Docker and Docker Compose
+
+#### Network Requirements
+- Outbound internet access for DA layer communication
+- Inbound access on configured RPC ports
+
+## Development Roadmap
+
+### Phase 1: MVP - Single Sequencer Stack (Foundation)
+**Scope**: Complete automation of single sequencer deployment
+- Create single-command deployment shell script
+- Implement configuration templating within the script
+- Add configuration validation and error handling
+- Include health monitoring and logging setup
+- Write basic deployment documentation
+
+**Deliverables**:
+- Single shell script for complete deployment
+- One-liner curl command for installation
+- Configuration validation and error handling
+- Health check implementation
+- Basic monitoring setup
+
+### Phase 2: Documentation and Operational Excellence
+**Scope**: Comprehensive documentation and operational tooling
+- Complete deployment guides and troubleshooting documentation
+- Architecture documentation with diagrams
+- Operational runbooks for common tasks
+- Backup and recovery procedures
+- Performance tuning guides
+
+**Deliverables**:
+- Complete documentation suite
+- Troubleshooting guides
+- Operational procedures
+- Performance benchmarks
+- Security hardening guide
+
+### Phase 3: Modular Architecture Framework
+**Scope**: Establish foundation for additional modules
+- Design module plugin system
+- Create module template structure
+- Implement dependency management
+- Build module registry system
+- Create module development guidelines
+
+**Deliverables**:
+- Module framework architecture
+- Module template and examples
+- Dependency resolution system
+- Module registry
+- Developer documentation
+
+### Phase 4: Additional Modules (Future Enhancement)
+**Scope**: Expand system with additional blockchain components
+- Full node module
+- Validator module
+- Advanced monitoring module
+- Backup and recovery module
+- Multi-chain support module
+
+**Deliverables**:
+- Additional deployment modules
+- Enhanced monitoring capabilities
+- Backup/recovery automation
+- Multi-environment support
+
+## Logical Dependency Chain
+
+### Foundation Layer (Build First)
+1. **Shell Script Framework**: Core deployment automation and error handling
+2. **Configuration System**: Template generation and variable management within script
+3. **Docker Compose Base**: Core orchestration and networking
+4. **JWT Token Management**: Security foundation for inter-service communication
+
+### Core Blockchain Layer (Build Second)
+4. **Reth Sequencer Setup**: Execution layer deployment
+5. **Rollkit Sequencer Integration**: Consensus layer integration
+6. **Service Health Checks**: Basic monitoring and validation
+
+### Operational Layer (Build Third)
+7. **Monitoring Integration**: Prometheus metrics and logging
+8. **Deployment Automation**: Scripts and validation
+
+### Documentation and Enhancement Layer (Build Fourth)
+10. **Documentation Suite**: Comprehensive guides and procedures
+11. **Module Framework**: Architecture for future extensions
+12. **Advanced Features**: Performance optimization and additional modules
+
+### Quick Usability Milestones
+- **Day 1**: Single shell script deploys complete stack
+- **Week 1**: One-liner curl command with configuration validation
+- **Week 2**: Complete documentation and monitoring
+- **Month 1**: Modular framework ready for extensions
+
+## Risks and Mitigations
+
+### Technical Challenges
+
+**Risk**: Complex inter-service dependencies and timing issues
+**Mitigation**: Implement robust health checks, dependency ordering, and retry mechanisms
+
+**Risk**: Configuration complexity and environment-specific issues
+**Mitigation**: Comprehensive validation, clear error messages, and extensive testing across environments
+
+**Risk**: Security vulnerabilities in key management and network exposure
+**Mitigation**: Secure defaults, encrypted secrets management, and security audit procedures
+
+### MVP Definition and Scope
+
+**Risk**: Feature creep and over-engineering the initial release
+**Mitigation**: Strict adherence to single sequencer scope, clear acceptance criteria, and iterative development approach
+
+**Risk**: Insufficient testing and validation
+**Mitigation**: Automated testing pipeline, multiple environment validation, and comprehensive documentation
+
+### Resource Constraints
+
+**Risk**: Limited development time and expertise
+**Mitigation**: Phased approach, clear priorities, and leveraging existing Ansible/Docker expertise
+
+**Risk**: Maintenance and support overhead
+**Mitigation**: Self-documenting code, comprehensive operational guides, and automated monitoring
+
+## Appendix
+
+### Research Findings
+
+#### Existing Implementation Analysis
+- Current single-sequencer setup uses proven components (Reth/Lumen, Rollkit)
+- Docker Compose configuration ready for shell script automation
+- Prometheus integration available for monitoring
+- Direct RPC access simplifies network configuration
+
+#### Technology Stack Validation
+- Docker Compose: Proven orchestration for development and small-scale production
+- Rollkit: Active development with strong community support
+- Reth/Lumen: High-performance Ethereum execution layer
+- Celestia: Established data availability network
+
+### Deployment Method
+
+#### One-Liner Installation Command
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/01builders/infra/main/deploy-rollkit.sh)"
+```
+
+#### Shell Script Responsibilities
+- **Dependency Validation**: Check for Docker, Docker Compose availability (does not install them)
+- **File Download**: Download all necessary deployment files from repository
+- **Configuration Setup**: Generate and validate configuration files with secure defaults
+- **Deployment Preparation**: Prepare all files and validate Docker Compose configuration
+- **Documentation**: Provide clear instructions for manual service startup via docker-compose
+
+#### Script Features
+- **Error Handling**: Comprehensive error checking with rollback capabilities
+- **Logging**: Detailed logging for troubleshooting and audit trails
+- **Idempotency**: Safe to run multiple times without side effects
+- **Modularity**: Support for adding additional modules post-deployment
+
+### Technical Specifications
+
+#### Container Images
+- `ghcr.io/rollkit/lumen:latest`: Reth execution layer
+- `localhost/rollkit-evm-single:rolling`: Custom Rollkit sequencer (built from source)
+- `alpine:3.22.0`: Utility containers
+
+#### Network Configuration
+- Host networking mode for optimal performance
+- Direct RPC access on configured ports
+- Internal service communication via localhost
+- External access through configured domain/IP
+
+#### Storage Requirements
+- Persistent volumes for blockchain data
+- JWT token sharing between services
+- Log file persistence
+
+#### Environment Variables
+- Chain configuration (ID, genesis hash, block times)
+- Data availability settings (RPC endpoint, auth token, namespace)
+- Network configuration (ports, domains)
+- Security settings (passphrases, JWT secrets)

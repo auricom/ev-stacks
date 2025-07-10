@@ -1,0 +1,20 @@
+# Task ID: 6
+# Title: Integrate Rollkit Sequencer
+# Status: pending
+# Dependencies: 5
+# Priority: high
+# Description: Configure and integrate the Rollkit sequencer node with the execution layer
+# Details:
+Setup Rollkit integration:
+- Sequencer configuration
+- DA layer connection
+- Transaction ordering setup
+- Block production configuration
+- Integration with Reth
+- Performance optimization
+
+# Test Strategy:
+- Test block production
+- Verify transaction ordering
+- Validate DA layer connection
+- Check execution layer integration
