@@ -5,11 +5,11 @@
 
 set -euo pipefail
 
-# Simple configuration validation - just check if .env file exists and is readable
+# Configuration validation and setup
 validate_required_vars() {
     local env_file="${1:-.env}"
 
-    echo "Validating environment configuration..."
+    echo "Validating and setting up environment configuration..."
 
     if [[ ! -f "$env_file" ]]; then
         echo "ERROR: Environment file not found: $env_file"
@@ -21,7 +21,31 @@ validate_required_vars() {
         return 1
     fi
 
-    echo "Environment file validation completed successfully"
+    # Check for missing EVM_SIGNER_PASSPHRASE and generate if empty
+    if grep -q "^EVM_SIGNER_PASSPHRASE=$" "$env_file" || ! grep -q "^EVM_SIGNER_PASSPHRASE=" "$env_file"; then
+        echo "Generating random EVM signer passphrase..."
+        local passphrase=$(openssl rand -base64 32 | tr -d '\n')
+        sed -i "s/^EVM_SIGNER_PASSPHRASE=.*/EVM_SIGNER_PASSPHRASE=\"$passphrase\"/" "$env_file"
+        echo "EVM signer passphrase generated and set"
+    fi
+
+    # Check for missing CHAIN_ID and prompt user
+    if grep -q "^CHAIN_ID=$" "$env_file" || ! grep -q "^CHAIN_ID=" "$env_file"; then
+        echo "Chain ID is required for the deployment."
+        echo "Please enter a chain ID (e.g., 1234 for development, or your custom chain ID):"
+        read -r chain_id
+
+        # Validate chain ID is numeric
+        if ! [[ "$chain_id" =~ ^[0-9]+$ ]]; then
+            echo "ERROR: Chain ID must be a number"
+            return 1
+        fi
+
+        sed -i "s/^CHAIN_ID=.*/CHAIN_ID=\"$chain_id\"/" "$env_file"
+        echo "Chain ID set to: $chain_id"
+    fi
+
+    echo "Environment file validation and setup completed successfully"
     return 0
 }
 
