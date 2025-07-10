@@ -8,9 +8,7 @@ set -o pipefail
 # Fail when using undeclared variables
 set -u
 
-set -x
-
-# Logging function with emojis
+# Debug: Check if celestia-appd is available
 log() {
     local level="$1"
     local message="$2"
@@ -43,6 +41,39 @@ log() {
             ;;
     esac
 }
+
+# Check if celestia-appd is available and executable
+if ! command -v celestia-appd >/dev/null 2>&1; then
+    log "ERROR" "celestia-appd command not found in PATH"
+    log "DEBUG" "Current PATH: $PATH"
+    log "DEBUG" "Looking for celestia-appd in common locations..."
+
+    # Check common locations
+    for path in /usr/local/bin/celestia-appd /usr/bin/celestia-appd /bin/celestia-appd /home/celestia/celestia-appd; do
+        if [[ -f "$path" ]]; then
+            log "DEBUG" "Found celestia-appd at: $path"
+            if [[ -x "$path" ]]; then
+                log "SUCCESS" "celestia-appd is executable at: $path"
+                # Create symlink if not in PATH
+                if [[ ! -L /usr/local/bin/celestia-appd ]]; then
+                    ln -sf "$path" /usr/local/bin/celestia-appd
+                    log "SUCCESS" "Created symlink for celestia-appd"
+                fi
+                break
+            else
+                log "WARNING" "celestia-appd found but not executable at: $path"
+            fi
+        fi
+    done
+
+    # Final check
+    if ! command -v celestia-appd >/dev/null 2>&1; then
+        log "ERROR" "celestia-appd still not available after search"
+        exit 1
+    fi
+fi
+
+log "SUCCESS" "celestia-appd is available: $(which celestia-appd)"
 
 APPD_NODE_CONFIG_PATH=/home/celestia/.celestia/config/config.toml
 MONIKER=${MONIKER:-bb-node}
