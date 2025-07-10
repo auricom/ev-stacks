@@ -94,32 +94,6 @@ trap 'error_exit "Script interrupted by user" 130' INT
 trap 'error_exit "Script terminated" 143' TERM
 
 
-# Docker installation check
-check_docker() {
-    log "INFO" "Checking Docker installation..."
-
-    if ! command -v docker >/dev/null 2>&1; then
-        error_exit "Docker not found. Please install Docker before running this script."
-    fi
-
-    local docker_version=$(docker --version | cut -d' ' -f3 | cut -d',' -f1)
-    log "DEBUG" "Docker version: $docker_version"
-
-    # Check if Docker daemon is running
-    if ! docker info >/dev/null 2>&1; then
-        error_exit "Docker daemon is not running. Please start Docker service before running this script."
-    fi
-
-    # Check Docker Compose
-    if ! command -v docker-compose >/dev/null 2>&1; then
-        error_exit "Docker Compose not found. Please install Docker Compose before running this script."
-    fi
-
-    local compose_version=$(docker-compose --version | cut -d' ' -f3 | cut -d',' -f1)
-    log "DEBUG" "Docker Compose version: $compose_version"
-
-    log "INFO" "Docker installation check completed successfully"
-}
 
 
 # Download deployment files
@@ -133,19 +107,21 @@ download_deployment_files() {
     cd "$DEPLOYMENT_DIR" || error_exit "Failed to change to deployment directory"
 
     # Download files from the repository
-    local base_url="https://raw.githubusercontent.com/auricom/ev-stacks/main/stacks/single-sequencer"
+    local base_url="https://raw.githubusercontent.com/auricom/ev-stacks/main"
 
     local files=(
-        ".env"
-        "docker-compose.yml"
-        "entrypoint.sequencer.sh"
-        "evm-single.Dockerfile"
-        "genesis.json"
+        "stacks/single-sequencer/.env"
+        "stacks/single-sequencer/docker-compose.yml"
+        "stacks/single-sequencer/entrypoint.sequencer.sh"
+        "stacks/single-sequencer/evm-single.Dockerfile"
+        "stacks/single-sequencer/genesis.json"
+        "scripts/config-template.sh"
     )
 
     for file in "${files[@]}"; do
         log "DEBUG" "Downloading $file..."
-        curl -fsSL "$base_url/$file" -o "$file" || error_exit "Failed to download $file"
+        local filename=$(basename "$file")
+        curl -fsSL "$base_url/$file" -o "$filename" || error_exit "Failed to download $filename"
     done
 
     # Make entrypoint script executable
@@ -159,58 +135,11 @@ setup_configuration() {
     log "INFO" "Setting up configuration..."
 
     # Source configuration template functions
-    if [[ -f "$(dirname "$0")/config-template.sh" ]]; then
-        source "$(dirname "$0")/config-template.sh"
+    if [[ -f "config-template.sh" ]]; then
+        source "config-template.sh"
     else
-        log "WARN" "Configuration template script not found, using basic validation"
+        error_exit "Configuration template script not found. Required file: config-template.sh"
     fi
-
-    # Check if .env file exists
-    if [[ ! -f ".env" ]]; then
-        log "WARN" ".env file not found, generating default configuration..."
-        if command -v generate_default_config >/dev/null 2>&1; then
-            generate_default_config ".env"
-        else
-            # Fallback basic .env generation
-            cat > .env << 'EOF'
-DA_RPC_PORT="26658"
-DA_AUTH_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJwdWJsaWMiLCJyZWFkIiwid3JpdGUiXSwiTm9uY2UiOiJGVVNSbVhVUEFJdXJXekRwNWVOTXBCSWpLdThhWWFwWG9nbS84dUtRZVlZPSIsIkV4cGlyZXNBdCI6IjAwMDEtMDEtMDFUMDA6MDA6MDBaIn0.o3_GsLOPOPUSwHgXBImXKnHnDoqUzd9ebcphwy-VCqo"
-EVM_SIGNER_PASSPHRASE="$(openssl rand -base64 32)"
-SEQUENCER_PROMETHEUS_PORT="26660"
-SEQUENCER_RPC_PORT="7331"
-DA_START_HEIGHT="6853148"
-PUBLIC_DOMAIN="localhost"
-CHAIN_ID="1234"
-EOF
-        fi
-    fi
-
-    # Validate configuration using config-template functions if available
-    if command -v validate_required_vars >/dev/null 2>&1; then
-        if ! validate_required_vars ".env"; then
-            error_exit "Configuration validation failed"
-        fi
-    else
-        # Fallback basic validation
-        local required_vars=(
-            "DA_RPC_PORT"
-            "DA_AUTH_TOKEN"
-            "EVM_SIGNER_PASSPHRASE"
-            "SEQUENCER_PROMETHEUS_PORT"
-            "SEQUENCER_RPC_PORT"
-            "DA_START_HEIGHT"
-            "PUBLIC_DOMAIN"
-            "CHAIN_ID"
-        )
-
-        log "DEBUG" "Validating environment variables..."
-        for var in "${required_vars[@]}"; do
-            if ! grep -q "^${var}=" .env; then
-                log "WARN" "Required variable $var not found in .env file"
-            fi
-        done
-    fi
-
 
     log "INFO" "Configuration setup completed"
 }
@@ -239,6 +168,7 @@ validate_deployment_files() {
         "genesis.json"
         "entrypoint.sequencer.sh"
         "evm-single.Dockerfile"
+        "config-template.sh"
     )
 
     for file in "${required_files[@]}"; do
@@ -246,11 +176,6 @@ validate_deployment_files() {
             error_exit "Required file not found: $file"
         fi
     done
-
-    # Validate Docker Compose file syntax
-    if ! docker-compose config >/dev/null 2>&1; then
-        error_exit "Invalid Docker Compose configuration"
-    fi
 
     log "INFO" "Deployment files validation completed successfully"
 }
@@ -364,7 +289,6 @@ main() {
     fi
 
     # Run deployment steps
-    check_docker
     download_deployment_files
     setup_configuration
     validate_deployment_files

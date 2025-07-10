@@ -34,11 +34,11 @@ This project aims to document and automate the deployment of Rollkit EVM chains 
 **How it works**: Each module is self-contained with its own Docker Compose fragment, configuration templates, and dependency definitions.
 
 ### 3. Configuration Management System
-**What it does**: Provides templated configuration with environment-specific variable substitution and validation.
+**What it does**: Downloads pre-configured files from the repository with minimal validation to ensure file integrity.
 
-**Why it's important**: Ensures deployments are consistent across environments while allowing for necessary customization.
+**Why it's important**: Ensures deployments use trusted, tested configurations from the source repository without complex validation overhead.
 
-**How it works**: Uses shell script templating with environment variable substitution and configuration validation.
+**How it works**: Downloads configuration files directly from GitHub repository and performs basic file existence and readability checks only.
 
 ### 4. One-Liner Deployment System
 **What it does**: Provides a single curl command that downloads and executes a shell script to deploy the entire Rollkit EVM chain stack.
@@ -223,10 +223,10 @@ health_checks: array[object]
 ## Logical Dependency Chain
 
 ### Foundation Layer (Build First)
-1. **Shell Script Framework**: Core deployment automation and error handling
-2. **Configuration System**: Template generation and variable management within script
+1. **Shell Script Framework**: Core deployment automation with minimal validation
+2. **File Download System**: Direct download of trusted configuration files from repository
 3. **Docker Compose Base**: Core orchestration and networking
-4. **JWT Token Management**: Security foundation for inter-service communication
+4. **JWT Token Management**: Handled entirely by Docker Compose orchestration
 
 ### Core Blockchain Layer (Build Second)
 4. **Reth Sequencer Setup**: Execution layer deployment
@@ -301,17 +301,17 @@ health_checks: array[object]
 ```
 
 #### Shell Script Responsibilities
-- **Dependency Validation**: Check for Docker, Docker Compose availability (does not install them)
 - **File Download**: Download all necessary deployment files from repository
-- **Configuration Setup**: Generate and validate configuration files with secure defaults
-- **Deployment Preparation**: Prepare all files and validate Docker Compose configuration
+- **Basic Validation**: Minimal checks to ensure downloaded files exist and are readable
+- **Deployment Preparation**: Prepare all files for Docker Compose deployment
 - **Documentation**: Provide clear instructions for manual service startup via docker-compose
 
 #### Script Features
-- **Error Handling**: Comprehensive error checking with rollback capabilities
-- **Logging**: Detailed logging for troubleshooting and audit trails
+- **Minimal Validation**: Basic file existence and readability checks only
+- **Trusted Source Files**: Relies on repository-provided configurations without extensive validation
+- **Simple Error Handling**: Basic error checking with clear error messages
+- **Logging**: Essential logging for deployment tracking
 - **Idempotency**: Safe to run multiple times without side effects
-- **Modularity**: Support for adding additional modules post-deployment
 
 ### Technical Specifications
 
