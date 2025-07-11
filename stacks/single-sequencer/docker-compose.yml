@@ -74,6 +74,7 @@ services:
       - EVM_SIGNER_PASSPHRASE=${EVM_SIGNER_PASSPHRASE}
       - PROMETHEUS_ENABLED=true
       - ROLLKIT_HOME=/root/.evm-single
+    command: start
     network_mode: host
 
 volumes:
