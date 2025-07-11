@@ -67,7 +67,6 @@ services:
       - jwttoken:/root/jwt:ro
       - ./entrypoint.sequencer.sh:/usr/bin/entrypoint.sh
     entrypoint: /usr/bin/entrypoint.sh
-    # entrypoint: sleep infinity
     environment:
       - EVM_ENGINE_URL=http://localhost:8551
       - EVM_ETH_URL=http://localhost:8545
@@ -78,7 +77,6 @@ services:
       - PROMETHEUS_ENABLED=true
       - ROLLKIT_HOME=/root/.evm-single
     network_mode: host
-
 
 volumes:
   jwttoken:
