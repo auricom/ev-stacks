@@ -56,7 +56,7 @@ services:
 
   rollkit-evm-single-sequencer:
     container_name: sequencer
-    image: ghcr.io/rollkit/rollkit:main
+    image: ghcr.io/rollkit/rollkit-evm-single:main
     env_file: .env
     restart: always
     depends_on:

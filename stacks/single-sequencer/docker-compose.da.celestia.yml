@@ -68,7 +68,6 @@ services:
       - da-auth-token:/volumes/da_export:ro
       - ./entrypoint.sequencer.sh:/usr/bin/entrypoint.sh
     entrypoint: /usr/bin/entrypoint.sh
-    # entrypoint: sleep infinity
     environment:
       - EVM_ENGINE_URL=http://localhost:8551
       - EVM_ETH_URL=http://localhost:8545
