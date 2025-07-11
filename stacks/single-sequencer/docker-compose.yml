@@ -85,3 +85,5 @@ volumes:
     driver: local
   sequencer-data:
     driver: local
+  celestia-node-export:
+    external: true

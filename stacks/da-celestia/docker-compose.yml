@@ -38,8 +38,8 @@ services:
       app:
         condition: service_healthy
     volumes:
-      - celestia-node-export:/home/celestia
-      - da-auth-token:/volumes/da_export
+      - celestia-node-data:/home/celestia
+      - celestia-node-export:/volumes/da_export
       - ./entrypoint.da.sh:/entrypoint.sh
     environment:
       - VOLUME_EXPORT_PATH=/volumes/da_export
@@ -60,3 +60,4 @@ volumes:
     driver: local
   celestia-node-export:
     driver: local
+    name: celestia-node-export
