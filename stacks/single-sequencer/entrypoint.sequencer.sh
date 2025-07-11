@@ -53,6 +53,13 @@ if [ -n "$DA_AUTH_TOKEN_PATH" ]; then
     fi
 fi
 
+# Importing JWT token
+if [ -n "$EVM_JWT_PATH" ]; then
+    if [ -f "$EVM_JWT_PATH" ]; then
+        EVM_JWT_SECRET=$(cat ${EVM_JWT_PATH})
+    fi
+fi
+
 # Auto-retrieve genesis hash if not provided
 if [ -z "$EVM_GENESIS_HASH" ] && [ -n "$EVM_ETH_URL" ]; then
     echo "EVM_GENESIS_HASH not provided, attempting to retrieve from reth-sequencer..."

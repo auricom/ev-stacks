@@ -17,8 +17,8 @@ services:
         openssl rand -hex 32 | tr -d '\n' > /jwt/jwt.hex;
       fi"
 
-  reth-sequencer:
-    container_name: reth-sequencer
+  reth:
+    container_name: reth
     image: ghcr.io/rollkit/lumen:latest
     depends_on:
       jwt-init:
@@ -56,7 +56,10 @@ services:
 
   rollkit-evm-single-sequencer:
     container_name: sequencer
-    image: ghcr.io/rollkit/rollkit-evm-single:main
+    image: localhost/rollkit-evm-single:rolling
+    build:
+      context: .
+      dockerfile: single-sequencer.Dockerfile
     env_file: .env
     restart: always
     depends_on:
@@ -75,13 +78,12 @@ services:
       - EVM_BLOCK_TIME=500ms
       - EVM_SIGNER_PASSPHRASE=${EVM_SIGNER_PASSPHRASE}
       - DA_BLOCK_TIME=30s
-      - DA_ADDRESS=http://localhost:${DA_RPC_PORT}
+      - DA_ADDRESS=http://celestia-node:${DA_RPC_PORT}
       - DA_NAMESPACE=${DA_NAMESPACE}
       - DA_AUTH_TOKEN_PATH=/volumes/da_export/auth_token
       - DA_START_HEIGHT=${DA_START_HEIGHT}
       - PROMETHEUS_ENABLED=true
       - ROLLKIT_HOME=/root/.evm-single
-    network_mode: host
 
 volumes:
   jwttoken:

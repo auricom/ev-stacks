@@ -75,7 +75,7 @@ fi
 
 log "SUCCESS" "celestia-appd is available: $(which celestia-appd)"
 
-APPD_NODE_CONFIG_PATH=$HOME/config/config.toml
+APPD_NODE_CONFIG_PATH=$HOME/config/app.toml
 MONIKER=${MONIKER:-node}
 
 log "INIT" "Starting Celestia App Daemon initialization"
@@ -162,6 +162,18 @@ if [ ! -f "$APPD_NODE_CONFIG_PATH" ]; then
 else
     log "INFO" "Config file already exists at $APPD_NODE_CONFIG_PATH"
     log "INFO" "Skipping initialization - node already configured"
+fi
+
+# Configure gRPC server to be accessible from outside container
+log "INFO" "Configuring gRPC server"
+if [[ -f "$APPD_NODE_CONFIG_PATH" ]]; then
+    # Enable gRPC server specifically in the [grpc] section
+    sed -i '/^\[grpc\]/,/^\[/ { /^enable = false/s/false/true/ }' "$APPD_NODE_CONFIG_PATH"
+    # Replace localhost:9090 with 0.0.0.0:9090 to make gRPC accessible externally
+    sed -i 's/localhost:9090/0.0.0.0:9090/g' "$APPD_NODE_CONFIG_PATH"
+    log "SUCCESS" "gRPC server enabled and configured to 0.0.0.0:9090"
+else
+    log "WARNING" "Config file not found, skipping gRPC configuration"
 fi
 
 log "INIT" "Starting celestia-appd with chain-id: $DA_NETWORK"

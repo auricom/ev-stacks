@@ -17,8 +17,8 @@ services:
         openssl rand -hex 32 | tr -d '\n' > /jwt/jwt.hex;
       fi"
 
-  reth-sequencer:
-    container_name: reth-sequencer
+  reth:
+    container_name: reth
     image: ghcr.io/rollkit/lumen:latest
     depends_on:
       jwt-init:
@@ -56,11 +56,8 @@ services:
 
   rollkit-evm-single-sequencer:
     container_name: sequencer
+    image: ghcr.io/rollkit/rollkit-evm-single:main
     env_file: .env
-    image: localhost/rollkit-evm-single:rolling
-    build:
-      context: .
-      dockerfile: single-sequencer.Dockerfile
     restart: always
     depends_on:
       reth-sequencer:
