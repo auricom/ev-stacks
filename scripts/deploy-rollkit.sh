@@ -318,6 +318,18 @@ setup_sequencer_configuration() {
                     echo "DA_NAMESPACE=\"$da_namespace\"" >> "$env_file"
                 fi
                 log "SUCCESS" "DA_NAMESPACE set to: $da_namespace"
+            else
+                log "WARN" "DA_NAMESPACE is empty in da-celestia .env file. Single-sequencer may show warnings."
+                # Still add the empty DA_NAMESPACE to single-sequencer .env to avoid undefined variable warnings
+                if ! grep -q "^DA_NAMESPACE=" "$env_file"; then
+                    echo "DA_NAMESPACE=" >> "$env_file"
+                fi
+            fi
+        else
+            log "WARN" "DA-Celestia .env file not found. Adding empty DA_NAMESPACE to prevent warnings."
+            # Add empty DA_NAMESPACE to single-sequencer .env to avoid undefined variable warnings
+            if ! grep -q "^DA_NAMESPACE=" "$env_file"; then
+                echo "DA_NAMESPACE=" >> "$env_file"
             fi
         fi
     fi
