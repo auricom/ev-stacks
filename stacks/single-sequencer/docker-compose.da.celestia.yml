@@ -65,7 +65,7 @@ services:
     volumes:
       - sequencer-data:/root/.evm-single
       - jwttoken:/root/jwt:ro
-      - da-auth-token:/volumes/da_export:ro
+      - celestia-node-export:/volumes/da_export:ro
     environment:
       - EVM_ENGINE_URL=http://localhost:8551
       - EVM_ETH_URL=http://localhost:8545
