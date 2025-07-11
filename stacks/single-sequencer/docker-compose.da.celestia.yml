@@ -56,7 +56,7 @@ services:
 
   rollkit-evm-single-sequencer:
     container_name: sequencer
-    image: ghcr.io/rollkit/rollkit:main
+    image: ghcr.io/rollkit/rollkit-evm-single:main
     env_file: .env
     restart: always
     depends_on:
@@ -66,8 +66,6 @@ services:
       - sequencer-data:/root/.evm-single
       - jwttoken:/root/jwt:ro
       - da-auth-token:/volumes/da_export:ro
-      - ./entrypoint.sequencer.sh:/usr/bin/entrypoint.sh
-    entrypoint: /usr/bin/entrypoint.sh
     environment:
       - EVM_ENGINE_URL=http://localhost:8551
       - EVM_ETH_URL=http://localhost:8545

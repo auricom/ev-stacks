@@ -176,7 +176,6 @@ download_sequencer_files() {
     local files=(
         "stacks/single-sequencer/.env"
         "$docker_compose_file"
-        "stacks/single-sequencer/entrypoint.sequencer.sh"
         "stacks/single-sequencer/genesis.json"
     )
 
@@ -189,9 +188,6 @@ download_sequencer_files() {
         fi
         curl -fsSL "$base_url/$file" -o "$filename" || error_exit "Failed to download $filename"
     done
-
-    # Make entrypoint script executable
-    chmod +x entrypoint.sequencer.sh || error_exit "Failed to make entrypoint script executable"
 
     log "SUCCESS" "Single-sequencer deployment files downloaded successfully"
 }
@@ -436,7 +432,6 @@ validate_sequencer_files() {
         "docker-compose.yml"
         ".env"
         "genesis.json"
-        "entrypoint.sequencer.sh"
     )
 
     for file in "${required_files[@]}"; do
