@@ -617,6 +617,102 @@ parse_arguments() {
     done
 }
 
+# Check for existing deployment
+check_existing_deployment() {
+    local existing_deployment=false
+    local existing_stacks=()
+
+    # Check if deployment directory exists
+    if [[ -d "$DEPLOYMENT_DIR" ]]; then
+        log "WARN" "Existing deployment directory found: $DEPLOYMENT_DIR"
+        existing_deployment=true
+
+        # Check for existing single-sequencer stack
+        if [[ -f "$DEPLOYMENT_DIR/single-sequencer/docker-compose.yml" ]]; then
+            existing_stacks+=("single-sequencer")
+        fi
+
+        # Check for existing da-celestia stack
+        if [[ -f "$DEPLOYMENT_DIR/da-celestia/docker-compose.yml" ]]; then
+            existing_stacks+=("da-celestia")
+        fi
+    fi
+
+    # Check for running containers
+    if command -v docker >/dev/null 2>&1; then
+        local running_containers=()
+
+        # Check for running single-sequencer containers
+        if docker ps --format "table {{.Names}}" | grep -E "(sequencer|reth-sequencer|jwt-init)" >/dev/null 2>&1; then
+            running_containers+=("single-sequencer")
+        fi
+
+        # Check for running da-celestia containers
+        if docker ps --format "table {{.Names}}" | grep -E "(celestia-app|celestia-node|da-permission-fix)" >/dev/null 2>&1; then
+            running_containers+=("da-celestia")
+        fi
+
+        if [[ ${#running_containers[@]} -gt 0 ]]; then
+            log "WARN" "Found running containers from previous deployment: ${running_containers[*]}"
+            existing_deployment=true
+        fi
+    fi
+
+    # If existing deployment found, warn user
+    if [[ "$existing_deployment" == "true" ]]; then
+        echo ""
+        echo "⚠️  =========================================="
+        echo "⚠️  EXISTING DEPLOYMENT DETECTED"
+        echo "⚠️  =========================================="
+        echo ""
+
+        if [[ ${#existing_stacks[@]} -gt 0 ]]; then
+            echo "📁 Found existing deployment files for: ${existing_stacks[*]}"
+        fi
+
+        if [[ ${#running_containers[@]} -gt 0 ]]; then
+            echo "🐳 Found running containers for: ${running_containers[*]}"
+        fi
+
+        echo ""
+        echo "🚨 WARNING: Continuing will:"
+        echo "   • Overwrite existing deployment files"
+        echo "   • Potentially conflict with running containers"
+        echo "   • Require manual cleanup of Docker volumes if you want a fresh start"
+        echo ""
+        echo "💡 To completely reset your deployment:"
+        echo "   1. Stop running containers: docker compose down"
+        echo "   2. Remove volumes: docker volume prune -f"
+        echo "   3. Remove deployment directory: rm -rf $DEPLOYMENT_DIR"
+        echo ""
+
+        while true; do
+            echo -n "Do you want to continue with the deployment? (y/N): "
+            read -r response
+
+            case "$response" in
+                [Yy]|[Yy][Ee][Ss])
+                    log "INFO" "User confirmed to continue with existing deployment"
+                    echo ""
+                    echo "⚠️  IMPORTANT: You may need to manually clean up Docker volumes"
+                    echo "   if you experience issues with persistent data from previous deployments."
+                    echo "   Use 'docker volume ls' to see volumes and 'docker volume rm <name>' to remove them."
+                    echo ""
+                    break
+                    ;;
+                [Nn]|[Nn][Oo]|"")
+                    log "INFO" "User chose to abort deployment"
+                    echo "Deployment aborted by user."
+                    exit 0
+                    ;;
+                *)
+                    echo "Please answer 'y' for yes or 'n' for no."
+                    ;;
+            esac
+        done
+    fi
+}
+
 # Main deployment function
 main() {
     log "INIT" "Starting Rollkit deployment v$SCRIPT_VERSION"
@@ -626,6 +722,9 @@ main() {
         touch "$LOG_FILE" || error_exit "Failed to create log file: $LOG_FILE"
         log "INFO" "Logging to: $LOG_FILE"
     fi
+
+    # Check for existing deployment and warn user
+    check_existing_deployment
 
     # Interactive DA selection if not specified via command line
     if [[ "$DEPLOY_DA_CELESTIA" == "false" && -z "$SELECTED_DA" ]]; then
