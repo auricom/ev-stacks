@@ -378,13 +378,13 @@ setup_da_celestia_configuration() {
 setup_configuration() {
     log "CONFIG" "Setting up configuration..."
 
-    # Setup single-sequencer configuration
-    setup_sequencer_configuration
-
-    # Setup da-celestia configuration if deployed
+    # Setup da-celestia configuration first if deployed (so DA_NAMESPACE is available for single-sequencer)
     if [[ "$DEPLOY_DA_CELESTIA" == "true" ]]; then
         setup_da_celestia_configuration
     fi
+
+    # Setup single-sequencer configuration
+    setup_sequencer_configuration
 
     log "SUCCESS" "All configuration setup completed"
 }
