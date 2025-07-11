@@ -65,6 +65,7 @@ services:
     volumes:
       - sequencer-data:/root/.evm-single
       - jwttoken:/root/jwt:ro
+      - da-auth-token:/volumes/da_export:ro
       - ./entrypoint.sequencer.sh:/usr/bin/entrypoint.sh
     entrypoint: /usr/bin/entrypoint.sh
     # entrypoint: sleep infinity
@@ -75,10 +76,14 @@ services:
       - EVM_GENESIS_HASH=0xe720f8ec96a43a741b1ab34819acfeb029ce4f083fe73c5a08c1f6a7b17a8568
       - EVM_BLOCK_TIME=500ms
       - EVM_SIGNER_PASSPHRASE=${EVM_SIGNER_PASSPHRASE}
+      - DA_BLOCK_TIME=30s
+      - DA_ADDRESS=http://localhost:${DA_RPC_PORT}
+      - DA_NAMESPACE=${DA_NAMESPACE}
+      - DA_AUTH_TOKEN_PATH=/volumes/da_export/auth_token
+      - DA_START_HEIGHT=${DA_START_HEIGHT}
       - PROMETHEUS_ENABLED=true
       - ROLLKIT_HOME=/root/.evm-single
     network_mode: host
-
 
 volumes:
   jwttoken:
@@ -87,3 +92,6 @@ volumes:
     driver: local
   sequencer-data:
     driver: local
+  da-auth-token:
+    external: true
+    name: da-auth-token

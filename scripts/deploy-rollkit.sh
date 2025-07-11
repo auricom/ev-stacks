@@ -163,9 +163,19 @@ download_sequencer_files() {
     # Download files from the repository
     local base_url="https://raw.githubusercontent.com/auricom/ev-stacks/main"
 
+    # Choose the appropriate docker-compose file based on DA selection
+    local docker_compose_file
+    if [[ "$DEPLOY_DA_CELESTIA" == "true" ]]; then
+        docker_compose_file="stacks/single-sequencer/docker-compose.da.celestia.yml"
+        log "CONFIG" "Using DA Celestia integrated docker-compose file"
+    else
+        docker_compose_file="stacks/single-sequencer/docker-compose.yml"
+        log "CONFIG" "Using standalone docker-compose file"
+    fi
+
     local files=(
         "stacks/single-sequencer/.env"
-        "stacks/single-sequencer/docker-compose.yml"
+        "$docker_compose_file"
         "stacks/single-sequencer/entrypoint.sequencer.sh"
         "stacks/single-sequencer/genesis.json"
     )
@@ -173,6 +183,10 @@ download_sequencer_files() {
     for file in "${files[@]}"; do
         log "DEBUG" "Downloading $file..."
         local filename=$(basename "$file")
+        # Always save as docker-compose.yml regardless of source file name
+        if [[ "$filename" == "docker-compose.da.celestia.yml" ]]; then
+            filename="docker-compose.yml"
+        fi
         curl -fsSL "$base_url/$file" -o "$filename" || error_exit "Failed to download $filename"
     done
 
@@ -287,6 +301,27 @@ setup_sequencer_configuration() {
         log "SUCCESS" "Chain ID set to: $chain_id"
     fi
 
+    # If DA Celestia is deployed, add DA configuration to single-sequencer
+    if [[ "$DEPLOY_DA_CELESTIA" == "true" ]]; then
+        log "CONFIG" "Configuring single-sequencer for DA Celestia integration..."
+
+        # Get DA_NAMESPACE from da-celestia .env file
+        local da_celestia_env="$DEPLOYMENT_DIR/da-celestia/.env"
+        if [[ -f "$da_celestia_env" ]]; then
+            local da_namespace=$(grep "^DA_NAMESPACE=" "$da_celestia_env" | cut -d'=' -f2 | tr -d '"')
+
+            if [[ -n "$da_namespace" ]]; then
+                # Add or update DA_NAMESPACE in single-sequencer .env
+                if grep -q "^DA_NAMESPACE=" "$env_file"; then
+                    sed -i "s|^DA_NAMESPACE=.*|DA_NAMESPACE=\"$da_namespace\"|" "$env_file"
+                else
+                    echo "DA_NAMESPACE=\"$da_namespace\"" >> "$env_file"
+                fi
+                log "SUCCESS" "DA_NAMESPACE set to: $da_namespace"
+            fi
+        fi
+    fi
+
     log "SUCCESS" "Single-sequencer configuration setup completed"
 }
 
@@ -346,6 +381,23 @@ setup_configuration() {
     log "SUCCESS" "All configuration setup completed"
 }
 
+# Create shared volume for DA auth token
+create_shared_volume() {
+    if [[ "$DEPLOY_DA_CELESTIA" == "true" ]]; then
+        log "CONFIG" "Creating shared volume for DA auth token..."
+
+        # Create the shared volume if it doesn't exist
+        if ! docker volume inspect da-auth-token >/dev/null 2>&1; then
+            if ! docker volume create da-auth-token; then
+                error_exit "Failed to create shared volume da-auth-token"
+            fi
+            log "SUCCESS" "Created shared volume: da-auth-token"
+        else
+            log "INFO" "Shared volume da-auth-token already exists"
+        fi
+    fi
+}
+
 # Deployment preparation
 prepare_deployment() {
     log "DEPLOY" "Preparing deployment files..."
@@ -354,6 +406,9 @@ prepare_deployment() {
         log "INFO" "DRY RUN: Deployment files prepared. Ready to run services"
         return 0
     fi
+
+    # Create shared volume for DA integration
+    create_shared_volume
 
     log "SUCCESS" "Deployment files prepared successfully"
 }

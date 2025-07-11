@@ -21,23 +21,25 @@ services:
     environment:
       - VOLUME_EXPORT_PATH=/volumes/da_export
     entrypoint: [/bin/bash, /entrypoint.sh]
-    # healthcheck:
-    #   test: ["CMD", "celestia", "node", "info", "--url", "http://localhost:26658"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
-    #   start_period: 5s
+    healthcheck:
+      test: ["CMD", "celestia-appd", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 50
+      start_period: 5s
   da:
     container_name: celestia-node
     image: ghcr.io/celestiaorg/celestia-node:${CELESTIA_NODE_TAG}
     env_file: .env
     restart: always
     depends_on:
-      - da-permission-fix
-      - app
+      da-permission-fix:
+        condition: service_completed_successfully
+      app:
+        condition: service_healthy
     volumes:
       - celestia-node-data:/home/celestia
-      - celestia-node-export:/volumes/da_export
+      - da-auth-token:/volumes/da_export
       - ./entrypoint.da.sh:/entrypoint.sh
     environment:
       - VOLUME_EXPORT_PATH=/volumes/da_export
@@ -58,3 +60,6 @@ volumes:
     driver: local
   celestia-node-export:
     driver: local
+  da-auth-token:
+    external: true
+    name: da-auth-token

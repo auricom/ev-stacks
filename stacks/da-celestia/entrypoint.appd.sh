@@ -75,7 +75,7 @@ fi
 
 log "SUCCESS" "celestia-appd is available: $(which celestia-appd)"
 
-APPD_NODE_CONFIG_PATH=/home/celestia/.celestia/config/config.toml
+APPD_NODE_CONFIG_PATH=$HOME/config/config.toml
 MONIKER=${MONIKER:-node}
 
 log "INIT" "Starting Celestia App Daemon initialization"
@@ -166,4 +166,4 @@ fi
 
 log "INIT" "Starting celestia-appd with chain-id: $DA_NETWORK"
 log "INFO" "Node is now starting up..."
-celestia-appd start --chain-id ${DA_NETWORK}
+celestia-appd start
