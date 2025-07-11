@@ -176,7 +176,9 @@ download_sequencer_files() {
     local files=(
         "stacks/single-sequencer/.env"
         "$docker_compose_file"
+        "stacks/single-sequencer/entrypoint.sequencer.sh"
         "stacks/single-sequencer/genesis.json"
+        "stacks/single-sequencer/single-sequencer.Dockerfile"
     )
 
     for file in "${files[@]}"; do
@@ -432,6 +434,8 @@ validate_sequencer_files() {
         "docker-compose.yml"
         ".env"
         "genesis.json"
+        "entrypoint.sequencer.sh"
+        "single-sequencer.Dockerfile"
     )
 
     for file in "${required_files[@]}"; do

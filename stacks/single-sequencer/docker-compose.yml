@@ -56,8 +56,11 @@ services:
 
   rollkit-evm-single-sequencer:
     container_name: sequencer
-    image: ghcr.io/rollkit/rollkit-evm-single:main
     env_file: .env
+    image: localhost/rollkit-evm-single:rolling
+    build:
+      context: .
+      dockerfile: single-sequencer.Dockerfile
     restart: always
     depends_on:
       reth-sequencer:
