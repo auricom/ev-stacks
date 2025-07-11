@@ -394,14 +394,14 @@ create_shared_volume() {
     if [[ "$DEPLOY_DA_CELESTIA" == "true" ]]; then
         log "CONFIG" "Creating shared volume for DA auth token..."
 
-        # Create the shared volume if it doesn't exist
-        if ! docker volume inspect da-auth-token >/dev/null 2>&1; then
-            if ! docker volume create da-auth-token; then
-                error_exit "Failed to create shared volume da-auth-token"
+        # Create the celestia-node-export volume if it doesn't exist
+        if ! docker volume inspect celestia-node-export >/dev/null 2>&1; then
+            if ! docker volume create celestia-node-export; then
+                error_exit "Failed to create shared volume celestia-node-export"
             fi
-            log "SUCCESS" "Created shared volume: da-auth-token"
+            log "SUCCESS" "Created shared volume: celestia-node-export"
         else
-            log "INFO" "Shared volume da-auth-token already exists"
+            log "INFO" "Shared volume celestia-node-export already exists"
         fi
     fi
 }

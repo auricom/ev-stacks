@@ -66,6 +66,7 @@ services:
       - sequencer-data:/root/.evm-single
       - jwttoken:/root/jwt:ro
       - celestia-node-export:/volumes/da_export:ro
+      - ./entrypoint.sequencer.sh:/usr/bin/entrypoint.sh
     command: start
     environment:
       - EVM_ENGINE_URL=http://localhost:8551
