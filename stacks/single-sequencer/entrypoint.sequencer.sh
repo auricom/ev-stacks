@@ -53,6 +53,50 @@ if [ -n "$DA_AUTH_TOKEN_PATH" ]; then
     fi
 fi
 
+# Auto-retrieve genesis hash if not provided
+if [ -z "$EVM_GENESIS_HASH" ] && [ -n "$EVM_ETH_URL" ]; then
+    echo "EVM_GENESIS_HASH not provided, attempting to retrieve from reth-sequencer..."
+
+    # Wait for reth-sequencer to be ready (max 60 seconds)
+    retry_count=0
+    max_retries=12
+    while [ $retry_count -lt $max_retries ]; do
+        if curl -s --connect-timeout 5 "$EVM_ETH_URL" >/dev/null 2>&1; then
+            echo "Reth-sequencer is ready, retrieving genesis hash..."
+            break
+        fi
+        echo "Waiting for reth-sequencer to be ready... (attempt $((retry_count + 1))/$max_retries)"
+        sleep 5
+        retry_count=$((retry_count + 1))
+    done
+
+    if [ $retry_count -eq $max_retries ]; then
+        echo "Warning: Could not connect to reth-sequencer at $EVM_ETH_URL after $max_retries attempts"
+        echo "Proceeding without auto-retrieved genesis hash..."
+    else
+        # Retrieve genesis block hash using curl and shell parsing
+        genesis_response=$(curl -s -X POST -H "Content-Type: application/json" \
+            --data '{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["0x0", false],"id":1}' \
+            "$EVM_ETH_URL" 2>/dev/null)
+
+        if [ $? -eq 0 ] && [ -n "$genesis_response" ]; then
+            # Extract hash using shell parameter expansion and sed
+            # Look for "hash":"0x..." pattern and extract the hash value
+            genesis_hash=$(echo "$genesis_response" | sed -n 's/.*"hash":"\([^"]*\)".*/\1/p')
+
+            if [ -n "$genesis_hash" ] && [ "${genesis_hash#0x}" != "$genesis_hash" ]; then
+                EVM_GENESIS_HASH="$genesis_hash"
+                echo "Successfully retrieved genesis hash: $EVM_GENESIS_HASH"
+            else
+                echo "Warning: Could not parse genesis hash from response"
+                echo "Response: $genesis_response"
+            fi
+        else
+            echo "Warning: Failed to retrieve genesis block from reth-sequencer"
+        fi
+    fi
+fi
+
 # Build start flags array
 default_flags="--home=$CONFIG_HOME"
 
