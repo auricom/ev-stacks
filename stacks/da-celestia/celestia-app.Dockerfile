@@ -1,4 +1,4 @@
-FROM ghcr.io/celestiaorg/celestia-app-standalone:${CELESTIA_APPD_TAG}
+FROM ghcr.io/celestiaorg/celestia-app-standalone:db33a83
 
 USER root
 
