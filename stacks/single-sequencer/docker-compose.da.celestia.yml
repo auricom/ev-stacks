@@ -89,6 +89,6 @@ volumes:
     driver: local
   sequencer-data:
     driver: local
-  da-auth-token:
+  celestia-node-export:
     external: true
-    name: da-auth-token
+    name: celestia-node-export
